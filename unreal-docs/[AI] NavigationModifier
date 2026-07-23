@@ -1,0 +1,105 @@
+In Unreal Engine, there isn't a direct equivalent to Unity's NavMeshModifier. However, you can achieve a similar result by using NavModifierVolumes or NavMeshBoundsVolumes, or by modifying the navigation data dynamically via C++ or Blueprints.
+
+Here’s a guide on how to dynamically spawn a NavModifierVolume (a type of volume that influences the NavMesh) during runtime in Unreal Engine:
+Using NavModifierVolume in Unreal Engine
+
+    NavModifierVolume: This is a volume that affects the navigation mesh, like modifying walkable areas or blocking specific regions. You can place it in the level to influence the navigation mesh dynamically.
+
+Steps to Spawn a NavModifierVolume at Runtime:
+1. Create a Blueprint or C++ Class with NavModifierVolume
+
+Blueprint Approach:
+
+    You can create a custom blueprint that contains a NavModifierVolume.
+    Then, you can spawn this blueprint dynamically at runtime.
+
+C++ Approach: If you prefer spawning a NavModifierVolume from C++ code, you can do so like this:
+2. C++ Code to Spawn NavModifierVolume
+
+Here’s a basic example to spawn a NavModifierVolume during runtime in Unreal Engine:
+
+#include "GameFramework/Actor.h"
+#include "NavigationSystem.h"
+#include "NavModifierVolume.h"
+#include "Engine/World.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Engine/StaticMeshActor.h"
+#include "MyNavModifierSpawner.generated.h"
+
+UCLASS()
+class MYPROJECT_API AMyNavModifierSpawner : public AActor
+{
+    GENERATED_BODY()
+
+public:
+    AMyNavModifierSpawner();
+
+protected:
+    virtual void BeginPlay() override;
+
+public:
+    UFUNCTION(BlueprintCallable)
+    void SpawnNavModifierVolume(FVector Location, FVector Extent);
+
+    UPROPERTY(EditDefaultsOnly, Category = "Navigation")
+    TSubclassOf<ANavModifierVolume> NavModifierVolumeClass;
+};
+
+AMyNavModifierSpawner::AMyNavModifierSpawner()
+{
+    PrimaryActorTick.bCanEverTick = false;
+}
+
+void AMyNavModifierSpawner::BeginPlay()
+{
+    Super::BeginPlay();
+
+    // Spawn a NavModifierVolume at a specific location with a custom size
+    SpawnNavModifierVolume(FVector(0, 0, 0), FVector(100, 100, 100));
+}
+
+void AMyNavModifierSpawner::SpawnNavModifierVolume(FVector Location, FVector Extent)
+{
+    // Ensure the NavModifierVolume class is set in the editor
+    if (NavModifierVolumeClass)
+    {
+        // Spawn the volume
+        ANavModifierVolume* NewVolume = GetWorld()->SpawnActor<ANavModifierVolume>(
+            NavModifierVolumeClass, Location, FRotator::ZeroRotator);
+
+        // Set the size (extent) of the volume
+        if (NewVolume)
+        {
+            NewVolume->GetRootComponent()->SetWorldScale3D(Extent);
+        }
+    }
+}
+
+Explanation:
+
+    SpawnNavModifierVolume: This function dynamically spawns a NavModifierVolume at a given location with a specified extent (size).
+    NavModifierVolumeClass: This is a reference to the class of the NavModifierVolume that will be spawned. You can set this reference in the editor or dynamically choose a specific class to spawn.
+    Location and Extent: These parameters define where the NavModifierVolume will be spawned and its size in world space.
+
+3. How to Set Up in the Editor:
+
+    Create an empty Actor class (like AMyNavModifierSpawner) or use a Blueprint that you can place in your level.
+    Inside the editor, assign a NavModifierVolume subclass to the NavModifierVolumeClass property if using C++ or drag the relevant blueprint in the editor.
+
+Using the NavModifierVolume:
+
+    Modifying Navigation Area: Once the NavModifierVolume is spawned, it can affect the navigation mesh in different ways depending on its properties, such as blocking or modifying the walkability of the area.
+
+    To modify the NavMesh itself, you can set the properties like AreaClass, bRecalculateNavMesh, etc.
+
+Example with Blueprints:
+
+If you're using Blueprints, you can follow these steps:
+
+    Create a Blueprint of NavModifierVolume.
+    Add the logic to spawn this NavModifierVolume at runtime using the Spawn Actor from Class node.
+    Set the position and other parameters as needed.
+
+Conclusion:
+
+In Unreal Engine, you can't directly spawn NavMeshModifiers as Unity does, but you can use NavModifierVolume to affect navigation during runtime. This approach is flexible for dynamically altering walkability and modifying the navigation mesh based on game logic.
